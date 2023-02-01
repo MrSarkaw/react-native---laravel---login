@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { setUser } from '../redux/user/action'
@@ -23,11 +23,29 @@ export default function Login({navigation}) {
     axios.post('login', form).then(async ({ data }) => {
       dispatch(setUser(data.user))
       await SecureStore.setItemAsync('token', data.token)
+      axios.defaults.headers.common['Authorization'] = "Bearer "+data.token
       navigation.navigate('home')
     }).catch((err) => {
       setError(err.response.data.errors)
     })
   }
+
+  useEffect(()=>{
+    (async()=>{
+      const token = await SecureStore.getItemAsync('token')
+      if(token){
+        axios.defaults.headers.common['Authorization'] = "Bearer "+token
+        axios.get('profile').then(({data})=>{
+          dispatch(setUser(data.data))
+          navigation.navigate('home')
+        }).catch(async ()=>{
+          await SecureStore.deleteItemAsync("token")
+        })
+      }
+    })();
+  }, [])
+
+
   return (
     <SafeAreaView>
       <View style={{ justifyContent: "center", alignItems: "center", height: "100%" }}>
