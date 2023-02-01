@@ -4,10 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { setUser } from '../redux/user/action'
 import { useSelector, useDispatch } from 'react-redux'
 import axios from '../axios';
+import * as SecureStore from 'expo-secure-store'
 
 
-
-export default function Login() {
+export default function Login({navigation}) {
   const dispatch = useDispatch()
   const user = useSelector((store) => store.user.user)
 
@@ -18,10 +18,12 @@ export default function Login() {
 
   const [error, setError] = useState([])
 
-  const login = () => {
+  const login =  () => {
     setError([])
-    axios.post('login', form).then(({ data }) => {
+    axios.post('login', form).then(async ({ data }) => {
       dispatch(setUser(data.user))
+      await SecureStore.setItemAsync('token', data.token)
+      navigation.navigate('home')
     }).catch((err) => {
       setError(err.response.data.errors)
     })
@@ -31,7 +33,7 @@ export default function Login() {
       <View style={{ justifyContent: "center", alignItems: "center", height: "100%" }}>
         <View style={{ backgroundColor: "white", padding: 10, width: "80%", borderRadius: 10 }}>
           <Text style={{ fontSize: 20 }}>Login Page</Text>
-          <Text style={{ fontSize: 30 }}>{user.email}</Text>
+          {/* <Text style={{ fontSize: 30 }}>{user.email}</Text> */}
           <Text style={{ color: 'red', fontSize: 16, marginTop: 18 }}>{error?.message ? error.message : ''}</Text>
           <View style={{ marginTop: 10 }}>
             <Text>Email</Text>
